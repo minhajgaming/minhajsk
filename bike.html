@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAMER ZONE - Bike Racing</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101820;color:white;text-align:center;font-family:Arial}
+h1{color:#00e5ff}
+canvas{background:#444;display:block;margin:auto;width:95%;max-width:400px;border:3px solid #00e5ff}
+.controls{display:flex;justify-content:center;gap:12px;margin:15px}
+button{padding:18px;background:#00d9ff;border:0;border-radius:12px;font-size:18px;font-weight:bold}
+</style>
+</head>
+<body>
+<h1>🏍️ BIKE RACING</h1>
+<p>Score: <span id="score">0</span></p>
+<canvas id="game" width="360" height="520"></canvas>
+<div class="controls">
+<button id="left">⬅️ LEFT</button>
+<button id="gas">⚡ GAS</button>
+<button id="right">RIGHT ➡️</button>
+</div>
+<button onclick="start()">START GAME</button>
+<p><a href="index.html" style="color:#00e5ff">🏠 HOME</a></p>
+<script>
+const c=document.getElementById("game");
+const ctx=c.getContext("2d");
+let x=180,y=420,score=0,obstacles=[],playing=false,speed=4;
+let left=false,right=false,gas=false;
+
+function drawBike(){
+ctx.fillStyle="#00e5ff";
+ctx.fillRect(x-12,y-22,24,42);
+ctx.fillStyle="black";
+ctx.fillRect(x-9,y-26,18,12);
+ctx.fillRect(x-9,y+18,18,12);
+ctx.fillStyle="white";
+ctx.fillRect(x-7,y-10,14,8);
+}
+function draw(){
+ctx.fillStyle="#28733a";ctx.fillRect(0,0,360,520);
+ctx.fillStyle="#444";ctx.fillRect(45,0,270,520);
+ctx.fillStyle="white";
+for(let i=0;i<520;i+=80)ctx.fillRect(176,i,8,40);
+ctx.fillStyle="yellow";
+ctx.fillRect(45,0,5,520);ctx.fillRect(310,0,5,520);
+drawBike();
+obstacles.forEach(o=>{
+ctx.fillStyle="#ff3333";ctx.fillRect(o.x-15,o.y-20,30,40);
+});
+}
+function start(){
+x=180;score=0;speed=4;obstacles=[];playing=true;
+requestAnimationFrame(loop);
+}
+function loop(){
+if(!playing)return;
+ctx.clearRect(0,0,360,520);
+if(left)x-=5;if(right)x+=5;
+x=Math.max(65,Math.min(295,x));
+if(gas)speed=7;else speed=4;
+if(Math.random()<0.025)obstacles.push({x:80+Math.random()*200,y:-30});
+obstacles.forEach(o=>o.y+=speed);
+obstacles=obstacles.filter(o=>o.y<550);
+for(const o of obstacles){
+if(Math.abs(o.x-x)<27&&Math.abs(o.y-y)<38){
+playing=false;alert("GAME OVER! Score: "+score);return;
+}}
+score++;
+document.getElementById("score").textContent=score;
+draw();
+requestAnimationFrame(loop);
+}
+function control(id,key){
+let b=document.getElementById(id);
+b.onpointerdown=()=>{window[key]=true};
+b.onpointerup=b.onpointerleave=b.onpointercancel=()=>{window[key]=false};
+}
+control("left","left");control("right","right");control("gas","gas");
+draw();
+</script>
+</body>
+  </html>
+  
