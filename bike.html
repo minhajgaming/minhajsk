@@ -1,87 +1,201 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GAMER ZONE - Bike Racing</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101820;color:white;text-align:center;font-family:Arial}
+body{
+ margin:0;background:#07111f;color:white;
+ text-align:center;font-family:Arial;
+}
 h1{color:#00e5ff}
-canvas{background:#444;display:block;margin:auto;width:95%;max-width:400px;border:3px solid #00e5ff}
-.controls{display:flex;justify-content:center;gap:12px;margin:15px}
-button{padding:18px;background:#00d9ff;border:0;border-radius:12px;font-size:18px;font-weight:bold}
+canvas{
+ width:95%;max-width:400px;
+ background:#333;border:3px solid #00e5ff;
+ border-radius:10px;display:block;margin:auto;
+}
+.info{font-size:20px;margin:10px}
+.controls{
+ display:flex;justify-content:center;
+ gap:10px;flex-wrap:wrap;margin:15px;
+}
+button{
+ border:0;border-radius:12px;
+ padding:18px 20px;font-weight:bold;
+ font-size:17px;background:#00d9ff;color:black;
+ touch-action:none;
+}
+.start{background:#00ff88}
 </style>
 </head>
 <body>
-<h1>🏍️ BIKE RACING</h1>
-<p>Score: <span id="score">0</span></p>
-<canvas id="game" width="360" height="520"></canvas>
-<div class="controls">
-<button id="left">⬅️ LEFT</button>
-<button id="gas">⚡ GAS</button>
-<button id="right">RIGHT ➡️</button>
-</div>
-<button onclick="start()">START GAME</button>
-<p><a href="index.html" style="color:#00e5ff">🏠 HOME</a></p>
-<script>
-const c=document.getElementById("game");
-const ctx=c.getContext("2d");
-let x=180,y=420,score=0,obstacles=[],playing=false,speed=4;
-let left=false,right=false,gas=false;
 
-function drawBike(){
-ctx.fillStyle="#00e5ff";
-ctx.fillRect(x-12,y-22,24,42);
-ctx.fillStyle="black";
-ctx.fillRect(x-9,y-26,18,12);
-ctx.fillRect(x-9,y+18,18,12);
-ctx.fillStyle="white";
-ctx.fillRect(x-7,y-10,14,8);
+<h1>🏍️ BIKE RACING</h1>
+<div class="info">
+SCORE: <span id="score">0</span>
+</div>
+
+<canvas id="game" width="360" height="520"></canvas>
+
+<div class="controls">
+<button id="left">⬅ LEFT</button>
+<button id="gas">⚡ GAS</button>
+<button id="brake">🛑 BRAKE</button>
+<button id="right">RIGHT ➡</button>
+</div>
+
+<button class="start" onclick="startGame()">START GAME</button>
+<p><a href="index.html" style="color:#00e5ff">🏠 HOME</a></p>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let bikeX=180;
+let score=0;
+let speed=3;
+let road=0;
+let enemies=[];
+let running=false;
+let left=false,right=false,gas=false,brake=false;
+let frame=0;
+
+function drawBike(x,y){
+ ctx.save();
+ ctx.translate(x,y);
+
+ // Wheels
+ ctx.fillStyle="#050505";
+ ctx.fillRect(-10,-25,20,16);
+ ctx.fillRect(-10,15,20,16);
+
+ // Bike body
+ ctx.fillStyle="#00e5ff";
+ ctx.fillRect(-8,-18,16,36);
+
+ ctx.fillStyle="#ff3333";
+ ctx.fillRect(-6,-13,12,10);
+
+ // Headlight
+ ctx.fillStyle="yellow";
+ ctx.fillRect(-4,-25,8,5);
+
+ // Handle
+ ctx.fillStyle="white";
+ ctx.fillRect(-17,-19,34,4);
+
+ ctx.restore();
 }
-function draw(){
-ctx.fillStyle="#28733a";ctx.fillRect(0,0,360,520);
-ctx.fillStyle="#444";ctx.fillRect(45,0,270,520);
-ctx.fillStyle="white";
-for(let i=0;i<520;i+=80)ctx.fillRect(176,i,8,40);
-ctx.fillStyle="yellow";
-ctx.fillRect(45,0,5,520);ctx.fillRect(310,0,5,520);
-drawBike();
-obstacles.forEach(o=>{
-ctx.fillStyle="#ff3333";ctx.fillRect(o.x-15,o.y-20,30,40);
-});
+
+function drawRoad(){
+ ctx.fillStyle="#17612b";
+ ctx.fillRect(0,0,360,520);
+
+ ctx.fillStyle="#444";
+ ctx.fillRect(45,0,270,520);
+
+ ctx.fillStyle="white";
+ ctx.fillRect(45,0,5,520);
+ ctx.fillRect(310,0,5,520);
+
+ for(let y=-40;y<560;y+=80){
+  ctx.fillRect(132,(y+road)%560,6,40);
+  ctx.fillRect(222,(y+road)%560,6,40);
+ }
 }
-function start(){
-x=180;score=0;speed=4;obstacles=[];playing=true;
-requestAnimationFrame(loop);
+
+function drawEnemy(e){
+ ctx.fillStyle="#ff3030";
+ ctx.fillRect(e.x-14,e.y-20,28,42);
+ ctx.fillStyle="black";
+ ctx.fillRect(e.x-10,e.y-14,20,12);
+ ctx.fillStyle="yellow";
+ ctx.fillRect(e.x-8,e.y+15,16,4);
 }
+
+function startGame(){
+ bikeX=180;
+ score=0;
+ speed=3;
+ road=0;
+ enemies=[];
+ frame=0;
+ running=true;
+ requestAnimationFrame(loop);
+}
+
 function loop(){
-if(!playing)return;
-ctx.clearRect(0,0,360,520);
-if(left)x-=5;if(right)x+=5;
-x=Math.max(65,Math.min(295,x));
-if(gas)speed=7;else speed=4;
-if(Math.random()<0.025)obstacles.push({x:80+Math.random()*200,y:-30});
-obstacles.forEach(o=>o.y+=speed);
-obstacles=obstacles.filter(o=>o.y<550);
-for(const o of obstacles){
-if(Math.abs(o.x-x)<27&&Math.abs(o.y-y)<38){
-playing=false;alert("GAME OVER! Score: "+score);return;
-}}
-score++;
-document.getElementById("score").textContent=score;
-draw();
-requestAnimationFrame(loop);
+ if(!running)return;
+
+ ctx.clearRect(0,0,360,520);
+
+ if(left)bikeX-=5;
+ if(right)bikeX+=5;
+
+ bikeX=Math.max(65,Math.min(295,bikeX));
+
+ speed=gas?7:3;
+ if(brake)speed=1.5;
+
+ road=(road+speed)%560;
+
+ drawRoad();
+
+ frame++;
+ if(frame%65===0){
+  enemies.push({
+   x:[90,180,270][Math.floor(Math.random()*3)],
+   y:-40
+  });
+ }
+
+ enemies.forEach(e=>{
+  e.y+=speed;
+  drawEnemy(e);
+
+  if(Math.abs(e.x-bikeX)<25 &&
+     Math.abs(e.y-420)<38){
+   running=false;
+   alert("GAME OVER! SCORE: "+score);
+  }
+ });
+
+ enemies=enemies.filter(e=>e.y<560);
+
+ if(!running)return;
+
+ drawBike(bikeX,420);
+
+ score++;
+ document.getElementById("score").textContent=score;
+
+ requestAnimationFrame(loop);
 }
+
+// Mobile touch controls
 function control(id,key){
-let b=document.getElementById(id);
-b.onpointerdown=()=>{window[key]=true};
-b.onpointerup=b.onpointerleave=b.onpointercancel=()=>{window[key]=false};
+ const b=document.getElementById(id);
+ b.addEventListener("pointerdown",e=>{
+  e.preventDefault();
+  window[key]=true;
+ });
+ ["pointerup","pointercancel","pointerleave"].forEach(ev=>{
+  b.addEventListener(ev,()=>{
+   window[key]=false;
+  });
+ });
 }
-control("left","left");control("right","right");control("gas","gas");
-draw();
+
+control("left","left");
+control("right","right");
+control("gas","gas");
+control("brake","brake");
+
+drawRoad();
+drawBike(180,420);
 </script>
 </body>
-  </html>
-  
+</html>
