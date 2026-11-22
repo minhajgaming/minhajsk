@@ -1,233 +1,258 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GAMER ZONE 3D RACING</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMER ZONE - 3D Racing</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#07111c;color:white;font-family:Arial;text-align:center}
-header{padding:12px;background:#101f34}
+body{margin:0;background:#080d18;color:white;font-family:Arial;text-align:center}
+header{padding:12px;background:#101d35}
 h1{color:#00eaff;margin:5px}
-#hud{display:flex;justify-content:space-around;padding:12px;color:#00ffb3;font-weight:bold}
-#game{width:100%;height:65vh;min-height:390px;position:relative;overflow:hidden;background:#182d38}
+#game{height:75vh;min-height:450px;max-height:750px;position:relative;overflow:hidden;background:#111}
 canvas{display:block;width:100%;height:100%}
-#message{position:absolute;top:42%;left:0;width:100%;font-size:24px;font-weight:bold;text-shadow:0 2px 5px black;pointer-events:none}
-.controls{display:flex;justify-content:center;gap:25px;padding:15px}
-button{border:0;border-radius:12px;background:#00dfff;color:#00121b;font-weight:bold;font-size:20px;padding:14px 28px}
-#start{font-size:17px;margin:8px}
-footer{padding:15px;color:#aaa}
+#hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none;text-shadow:1px 2px 4px black;font-weight:bold}
+#controls{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;align-items:end;padding:0 15px;pointer-events:none}
+#steer{width:105px;height:105px;border:9px solid #ddd;border-radius:50%;background:#222b;display:grid;place-items:center;font-size:55px;touch-action:none;pointer-events:auto;user-select:none}
+#pedals{display:flex;gap:10px;pointer-events:auto}
+.pedal{width:72px;height:75px;border:2px solid white;border-radius:14px;color:white;font-size:16px;font-weight:bold;touch-action:none;user-select:none}
+#gas{background:#079b39}
+#brake{background:#c52222}
+#start{position:absolute;inset:0;background:#0009;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px}
+#start button{padding:14px 28px;border:0;border-radius:12px;background:#00d9ff;font-size:20px;font-weight:bold}
+#start p{padding:0 15px}
 </style>
 </head>
 <body>
 <header>
-<h1>🏎️ GAMER ZONE</h1>
-<p>ULTIMATE 3D RACING</p>
+<h1>🏁 GAMER ZONE</h1>
+<p>3D SPORTS CAR RACING</p>
 </header>
-<div id="hud">
-<span>🏆 Score: <b id="score">0</b></span>
-<span>⚡ Speed: <b id="speed">0</b></span>
-</div>
+
 <div id="game">
-<div id="message">3D RACING</div>
+<div id="hud">
+<span>🏆 SCORE: <b id="score">0</b></span>
+<span>⚡ SPEED: <b id="speed">0</b> km/h</span>
 </div>
-<button id="start">START RACING</button>
-<div class="controls">
-<button id="left">⬅️ LEFT</button>
-<button id="right">RIGHT ➡️</button>
+<div id="start">
+<h2>🏎️ 3D CAR RACING</h2>
+<p>স্টিয়ারিং ঘুরিয়ে গাড়ি চালাও। বাধা এড়িয়ে যাও!</p>
+<button id="play">START GAME</button>
 </div>
-<p>Use arrow keys or touch buttons to drive.</p>
-<footer>© 2026 GAMER ZONE</footer>
+<div id="controls">
+<div id="steer">◉</div>
+<div id="pedals">
+<button class="pedal" id="brake">BRAKE</button>
+<button class="pedal" id="gas">GAS ▲</button>
+</div>
+</div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-const area=document.getElementById("game");
-const msg=document.getElementById("message");
-if(!window.THREE){
- msg.innerText="Internet connection required to load 3D";
- throw new Error("Three.js failed to load");
-}
-
+const game=document.getElementById("game");
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x8bd7ff);
-scene.fog=new THREE.Fog(0x8bd7ff,35,130);
+scene.background=new THREE.Color(0x87ceeb);
+scene.fog=new THREE.Fog(0x87ceeb,45,180);
 
-const camera=new THREE.PerspectiveCamera(65,1,0.1,200);
-camera.position.set(0,6,11);
+const camera=new THREE.PerspectiveCamera(65,1,0.1,300);
+camera.position.set(0,8,14);
+camera.lookAt(0,0,-8);
 
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
-area.appendChild(renderer.domElement);
+game.prepend(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x557744,2));
+scene.add(new THREE.HemisphereLight(0xffffff,0x456044,2));
 const sun=new THREE.DirectionalLight(0xffffff,2);
-sun.position.set(-5,15,8);
+sun.position.set(-10,20,10);
 sun.castShadow=true;
 scene.add(sun);
 
-const mat=(color)=>new THREE.MeshStandardMaterial({color});
-const road=new THREE.Mesh(
- new THREE.PlaneGeometry(12,180),
- mat(0x333840)
-);
+const mat=(color)=>new THREE.MeshStandardMaterial({color,roughness:.45});
+const road=new THREE.Mesh(new THREE.PlaneGeometry(14,300),mat(0x292d35));
 road.rotation.x=-Math.PI/2;
-road.position.z=-65;
+road.position.z=-90;
 scene.add(road);
 
-const grass=new THREE.Mesh(
- new THREE.PlaneGeometry(160,180),
- mat(0x27833c)
-);
+const grass=new THREE.Mesh(new THREE.PlaneGeometry(250,300),mat(0x24752b));
 grass.rotation.x=-Math.PI/2;
-grass.position.set(0,-0.08,-65);
+grass.position.y=-.08;
+grass.position.z=-90;
 scene.add(grass);
 
 const lines=[];
-for(let z=10;z>-150;z-=9){
- for(let x of [-2,2]){
-  let l=new THREE.Mesh(new THREE.BoxGeometry(.12,.025,4),mat(0xffffff));
-  l.position.set(x,.03,z);
+for(let z=-210;z<20;z+=12){
+ for(let x of [-2.3,2.3]){
+  const l=new THREE.Mesh(new THREE.BoxGeometry(.13,.025,5),mat(0xffffff));
+  l.position.set(x,.025,z);
   scene.add(l);lines.push(l);
  }
 }
-
-function makeCar(color){
- const group=new THREE.Group();
- const body=new THREE.Mesh(new THREE.BoxGeometry(1.35,.55,2.3),mat(color));
- body.position.y=.65;
- body.castShadow=true;
- group.add(body);
- const top=new THREE.Mesh(new THREE.BoxGeometry(.95,.55,1.15),mat(0x101d2b));
- top.position.set(0,1.12,-.15);
- group.add(top);
- const glass=new THREE.Mesh(new THREE.BoxGeometry(.83,.35,.1),mat(0x80dfff));
- glass.position.set(0,1.15,.43);
- group.add(glass);
- for(let x of [-.72,.72]){
-  for(let z of [-.7,.7]){
-   const w=new THREE.Mesh(new THREE.BoxGeometry(.22,.45,.4),mat(0x090909));
-   w.position.set(x,.42,z);group.add(w);
-  }
- }
- const light= new THREE.Mesh(new THREE.BoxGeometry(.3,.12,.06),mat(0xffffbb));
- light.position.set(-.42,.65,1.17);group.add(light);
- light.position.x=.42;
- return group;
+for(let x of [-7,7]){
+ const edge=new THREE.Mesh(new THREE.BoxGeometry(.25,.08,300),mat(0xffffff));
+ edge.position.set(x,.04,-90);scene.add(edge);
 }
 
-const player=makeCar(0x00ccff);
+function makeCar(color){
+ const car=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,.55,3.7),mat(color));
+ body.position.y=.65;car.add(body);
+ const hood=new THREE.Mesh(new THREE.BoxGeometry(1.8,.22,1.1),mat(color));
+ hood.position.set(0,.98,-1.15);car.add(hood);
+ const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.45,.65,1.65),mat(0x182b42));
+ cabin.position.set(0,1.18,.05);car.add(cabin);
+ const glass=new THREE.Mesh(new THREE.BoxGeometry(1.3,.42,.08),mat(0x65d9ff));
+ glass.position.set(0,1.3,-.79);car.add(glass);
+ for(let x of [-1,1]){
+  for(let z of [-1.15,1.15]){
+   const w=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.22,20),mat(0x111111));
+   w.rotation.z=Math.PI/2;w.position.set(x, .43,z);car.add(w);
+  }
+  const light=new THREE.Mesh(new THREE.BoxGeometry(.38,.18,.08),mat(0xffffff));
+  light.position.set(x*.58,.76,-1.88);car.add(light);
+ }
+ return car;
+}
+
+const player=makeCar(0xff1838);
 player.position.set(0,0,5);
 scene.add(player);
 
-const obstacles=[];
-function spawn(){
- const car=makeCar([0xff3333,0xffbb00,0xaa44ff][Math.floor(Math.random()*3)]);
- car.position.set([-4,0,4][Math.floor(Math.random()*3)],0,-100);
- scene.add(car);obstacles.push(car);
-}
+const enemies=[];
+const colors=[0xffcc00,0x00aaff,0xffffff,0x22dd77,0xff7700];
 
-const trees=[];
-for(let z=10;z>-150;z-=8){
- for(let x of [-10,10]){
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.15,.2,1.5),mat(0x754522));
-  trunk.position.set(x,.75,z);
-  scene.add(trunk);
-  const crown=new THREE.Mesh(new THREE.ConeGeometry(1.2,3,7),mat(0x087b35));
-  crown.position.set(x,2.6,z);
-  scene.add(crown);
-  trees.push({trunk,crown});
- }
+function spawnEnemy(){
+ const car=makeCar(colors[Math.floor(Math.random()*colors.length)]);
+ car.position.set([-3.5,0,3.5][Math.floor(Math.random()*3)],0,-115);
+ scene.add(car);enemies.push(car);
 }
+for(let i=0;i<4;i++)spawnEnemy();
 
-let lane=0,score=0,speed=0,playing=false,frame=0;
-let last=0;
+let running=false,score=0,speed=25,steer=0,gas=false,brake=false;
+let spawnTimer=0,last=0;
+const scoreEl=document.getElementById("score");
+const speedEl=document.getElementById("speed");
+const start=document.getElementById("start");
 
 function resize(){
- const w=area.clientWidth,h=area.clientHeight;
+ const w=game.clientWidth,h=game.clientHeight;
  camera.aspect=w/h;camera.updateProjectionMatrix();
  renderer.setSize(w,h);
 }
 window.addEventListener("resize",resize);
 resize();
 
-function move(n){
- if(playing)lane=Math.max(-1,Math.min(1,lane+n));
-}
-document.getElementById("left").onclick=()=>move(-1);
-document.getElementById("right").onclick=()=>move(1);
-document.addEventListener("keydown",e=>{
- if(e.key==="ArrowLeft"||e.key==="a")move(-1);
- if(e.key==="ArrowRight"||e.key==="d")move(1);
-});
-
-function end(){
- playing=false;
- msg.innerText="💥 GAME OVER! SCORE: "+score;
- document.getElementById("start").innerText="PLAY AGAIN";
-}
-
-function start(){
- obstacles.forEach(o=>scene.remove(o));
- obstacles.length=0;
- lane=0;score=0;speed=20;frame=0;
+function reset(){
+ score=0;speed=25;steer=0;spawnTimer=0;
  player.position.x=0;
- playing=true;
- msg.innerText="";
- document.getElementById("start").innerText="RESTART";
- last=performance.now();
+ enemies.forEach(e=>scene.remove(e));
+ enemies.length=0;
+ for(let i=0;i<4;i++)spawnEnemy();
 }
-document.getElementById("start").onclick=start;
+
+function endGame(){
+ running=false;
+ start.style.display="flex";
+ start.innerHTML='<h2>💥 GAME OVER!</h2><p>তোমার স্কোর: '+Math.floor(score)+'</p><button onclick="startGame()">PLAY AGAIN</button>';
+}
+
+function startGame(){
+ reset();running=true;last=0;
+ start.style.display="none";
+}
+window.startGame=startGame;
+document.getElementById("play").onclick=startGame;
+
+function hold(id,callback){
+ const el=document.getElementById(id);
+ el.addEventListener("pointerdown",e=>{
+  e.preventDefault();el.setPointerCapture(e.pointerId);callback(true);
+ });
+ ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>{
+  el.addEventListener(ev,()=>callback(false));
+ });
+}
+hold("gas",v=>gas=v);
+hold("brake",v=>brake=v);
+
+const wheel=document.getElementById("steer");
+let startX=0;
+wheel.addEventListener("pointerdown",e=>{
+ e.preventDefault();startX=e.clientX;wheel.setPointerCapture(e.pointerId);
+});
+wheel.addEventListener("pointermove",e=>{
+ if(wheel.hasPointerCapture(e.pointerId)){
+  steer=Math.max(-1,Math.min(1,(e.clientX-startX)/65));
+  wheel.style.transform="rotate("+steer*110+"deg)";
+ }
+});
+function releaseWheel(){
+ steer=0;wheel.style.transform="rotate(0deg)";
+}
+wheel.addEventListener("pointerup",releaseWheel);
+wheel.addEventListener("pointercancel",releaseWheel);
+
+window.addEventListener("keydown",e=>{
+ if(e.key==="ArrowLeft"||e.key==="a")steer=-1;
+ if(e.key==="ArrowRight"||e.key==="d")steer=1;
+ if(e.key==="ArrowUp")gas=true;
+ if(e.key==="ArrowDown")brake=true;
+});
+window.addEventListener("keyup",e=>{
+ if(["ArrowLeft","ArrowRight","a","d"].includes(e.key))steer=0;
+ if(e.key==="ArrowUp")gas=false;
+ if(e.key==="ArrowDown")brake=false;
+});
 
 function animate(t){
  requestAnimationFrame(animate);
- const dt=Math.min((t-last)/1000,.05);
- last=t;
+ const dt=Math.min((t-last)/1000||0,.05);last=t;
 
- if(playing){
-  frame++;
-  speed=Math.min(20+score/15,55);
-  player.position.x+=(lane*4-player.position.x)*Math.min(dt*9,1);
-  player.rotation.z=(player.position.x-lane*4)*-.07;
+ if(running){
+  if(gas)speed=Math.min(65,speed+30*dt);
+  else speed=Math.max(20,speed-8*dt);
+  if(brake)speed=Math.max(0,speed-55*dt);
+
+  player.position.x+=steer*speed*.055*dt;
+  player.position.x=Math.max(-5,Math.min(5,player.position.x));
+  player.rotation.z=-steer*.12;
 
   lines.forEach(l=>{
    l.position.z+=speed*dt;
-   if(l.position.z>12)l.position.z=-150;
+   if(l.position.z>12)l.position.z-=240;
   });
 
-  trees.forEach(o=>{
-   o.trunk.position.z+=speed*dt;
-   o.crown.position.z+=speed*dt;
-   if(o.trunk.position.z>12){
-    o.trunk.position.z=-150;o.crown.position.z=-150;
-   }
-  });
+  spawnTimer+=dt;
+  if(spawnTimer>1.6){
+   spawnEnemy();spawnTimer=0;
+  }
 
-  if(frame%85===0)spawn();
-
-  for(let i=obstacles.length-1;i>=0;i--){
-   let o=obstacles[i];
-   o.position.z+=speed*dt;
-   if(Math.abs(o.position.x-player.position.x)<1.15 &&
-      Math.abs(o.position.z-player.position.z)<1.8){
-    end();break;
+  for(let i=enemies.length-1;i>=0;i--){
+   const e=enemies[i];
+   e.position.z+=speed*dt;
+   if(Math.abs(e.position.x-player.position.x)<1.55 &&
+      Math.abs(e.position.z-player.position.z)<2.3){
+    endGame();break;
    }
-   if(o.position.z>12){
-    scene.remove(o);obstacles.splice(i,1);
+   if(e.position.z>15){
+    scene.remove(e);enemies.splice(i,1);
     score+=10;
    }
   }
-  document.getElementById("score").innerText=score;
-  document.getElementById("speed").innerText=Math.round(speed)+" km/h";
+  score+=dt*2;
+  scoreEl.textContent=Math.floor(score);
+  speedEl.textContent=Math.floor(speed);
  }
 
- camera.position.x+=(player.position.x*.35-camera.position.x)*.04;
- camera.lookAt(player.position.x*.25,1,-5);
+ camera.position.x+=(player.position.x*.25-camera.position.x)*.04;
+ camera.lookAt(player.position.x*.2,0,-8);
  renderer.render(scene,camera);
 }
-animate(0);
+requestAnimationFrame(animate);
 </script>
 </body>
-  </html>
-  
+ </html>
+ 
