@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>MINHAJ GAMING SK - Football</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#07130c;color:white;font-family:Arial;text-align:center}
+header{padding:12px;background:#10271a}
+h2{margin:0;color:#00ffad}
+#hud{display:flex;justify-content:space-around;padding:12px;background:#15251b;font-weight:bold}
+#field{position:relative;overflow:hidden;height:calc(100dvh - 145px);min-height:400px;background:#187b36}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+#controls{position:absolute;bottom:15px;left:0;right:0;display:flex;justify-content:space-between;padding:0 15px;align-items:end;pointer-events:none}
+#joy{width:110px;height:110px;border:3px solid white;border-radius:50%;background:#ffffff33;position:relative;pointer-events:auto;touch-action:none}
+#knob{width:42px;height:42px;background:white;border-radius:50%;position:absolute;left:31px;top:31px}
+#kick{width:90px;height:90px;border-radius:50%;background:#ffb400;color:#111;border:4px solid white;font-size:18px;font-weight:bold;pointer-events:auto;touch-action:none}
+#overlay{position:absolute;inset:0;background:#000b;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:15px}
+#overlay button{padding:14px 28px;background:#00eaa0;border:0;border-radius:12px;font-size:20px;font-weight:bold}
+</style>
+</head>
+<body>
+<header>
+<h2>⚽ MINHAJ GAMING SK</h2>
+<p>FOOTBALL CHAMPIONSHIP</p>
+</header>
+
+<div id="hud">
+<span>🏆 GOALS: <b id="score">0</b></span>
+<span>⏱ TIME: <b id="time">60</b></span>
+</div>
+
+<div id="field">
+<canvas id="game"></canvas>
+<div id="controls">
+<div id="joy"><div id="knob"></div></div>
+<button id="kick">KICK ⚽</button>
+</div>
+<div id="overlay">
+<h1>⚽ FOOTBALL GAME</h1>
+<p>বল নিয়ে গোল করো!</p>
+<button id="start">START MATCH</button>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const field=document.getElementById("field");
+let W,H;
+
+function resize(){
+ W=canvas.width=field.clientWidth;
+ H=canvas.height=field.clientHeight;
+}
+window.addEventListener("resize",resize);
+resize();
+
+let player,ball,score=0,time=60,running=false;
+let dx=0,dy=0,kick=false,last=0;
+let goalFlash=0;
+
+function reset(){
+ player={x:W/2,y:H*.75,r:18};
+ ball={x:W/2,y:H*.65,vx:0,vy:0,r:11};
+ score=0;time=60;goalFlash=0;
+ hud();
+}
+function hud(){
+ document.getElementById("score").textContent=score;
+ document.getElementById("time").textContent=Math.max(0,Math.ceil(time));
+}
+function startGame(){
+ reset();running=true;last=0;
+ document.getElementById("overlay").style.display="none";
+}
+document.getElementById("start").onclick=startGame;
+
+function drawField(){
+ ctx.fillStyle="#187b36";ctx.fillRect(0,0,W,H);
+ for(let i=0;i<8;i++){
+  if(i%2===0){
+   ctx.fillStyle="#ffffff0b";
+   ctx.fillRect(0,i*H/8,W,H/8);
+  }
+ }
+ ctx.strokeStyle="white";ctx.lineWidth=3;
+ ctx.strokeRect(12,12,W-24,H-24);
+ ctx.beginPath();
+ ctx.moveTo(12,H/2);ctx.lineTo(W-12,H/2);ctx.stroke();
+ ctx.beginPath();
+ ctx.arc(W/2,H/2,55,0,Math.PI*2);ctx.stroke();
+ // Goal
+ ctx.lineWidth=5;
+ ctx.strokeRect(W*.32,12,W*.36,55);
+ ctx.strokeRect(W*.32,H-67,W*.36,55);
+ ctx.fillStyle="#ffffff20";
+ ctx.fillRect(W*.32,12,W*.36,55);
+ ctx.fillRect(W*.32,H-67,W*.36,55);
+}
+function drawPlayer(){
+ ctx.fillStyle="#101010";
+ ctx.fillRect(player.x-11,player.y+10,22,17);
+ ctx.fillStyle="#168cff";
+ ctx.beginPath();ctx.arc(player.x,player.y,18,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="white";
+ ctx.beginPath();ctx.arc(player.x,player.y-3,7,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#111";
+ ctx.fillRect(player.x-10,player.y+19,8,12);
+ ctx.fillRect(player.x+3,player.y+19,8,12);
+}
+function drawBall(){
+ ctx.fillStyle="white";
+ ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle="#111";ctx.lineWidth=2;
+ ctx.beginPath();
+ ctx.moveTo(ball.x-7,ball.y-4);ctx.lineTo(ball.x+7,ball.y+4);
+ ctx.moveTo(ball.x+4,ball.y-8);ctx.lineTo(ball.x-4,ball.y+8);
+ ctx.stroke();
+}
+function kickBall(){
+ if(!running)return;
+ let x=ball.x-player.x,y=ball.y-player.y;
+ let d=Math.hypot(x,y);
+ if(d<75){
+  if(d<2){x=0;y=-1;d=1}
+  ball.vx=x/d*550;
+  ball.vy=y/d*550;
+ }
+}
+function update(dt){
+ if(!running)return;
+ time-=dt;
+ if(time<=0){
+  time=0;running=false;
+  document.getElementById("overlay").innerHTML=
+  "<h1>🏆 MATCH OVER!</h1><h2>GOALS: "+score+"</h2><button onclick='startGame()'>PLAY AGAIN</button>";
+  document.getElementById("overlay").style.display="flex";
+ }
+ player.x=Math.max(25,Math.min(W-25,player.x+dx*220*dt));
+ player.y=Math.max(80,Math.min(H-25,player.y+dy*220*dt));
+
+ let d=Math.hypot(ball.x-player.x,ball.y-player.y);
+ if(kick&&d<75){kickBall();kick=false}
+
+ ball.x+=ball.vx*dt;
+ ball.y+=ball.vy*dt;
+ ball.vx*=Math.pow(.985,dt*60);
+ ball.vy*=Math.pow(.985,dt*60);
+
+ if(ball.x<ball.r||ball.x>W-ball.r)ball.vx*=-.8;
+ if(ball.y>H-ball.r)ball.vy*=-.8;
+
+ // গোলের বাইরে গেলে বল ফিরে আসে
+ if(ball.y<5){
+  if(ball.x>W*.32&&ball.x<W*.68){
+   score++;hud();goalFlash=1;
+   ball.x=W/2;ball.y=H*.65;ball.vx=0;ball.vy=0;
+  }else{ball.y=12;ball.vy=Math.abs(ball.vy)*.8}
+ }
+ if(ball.y>H-5){
+  if(ball.x>W*.32&&ball.x<W*.68){
+   ball.x=W/2;ball.y=H*.65;ball.vx=0;ball.vy=0;
+  }else{ball.y=H-12;ball.vy=-Math.abs(ball.vy)*.8}
+ }
+ ball.x=Math.max(ball.r,Math.min(W-ball.r,ball.x));
+ goalFlash=Math.max(0,goalFlash-dt);
+ hud();
+}
+function draw(){
+ drawField();
+ if(!player)return;
+ drawBall();drawPlayer();
+ if(goalFlash>0){
+  ctx.fillStyle="#ffe600";
+  ctx.font="bold 40px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("GOAL!!!",W/2,H/2);
+ }
+}
+function loop(t){
+ requestAnimationFrame(loop);
+ let dt=Math.min((t-last)/1000||0,.04);
+ last=t;update(dt);draw();
+}
+requestAnimationFrame(loop);
+
+// Joystick
+const joy=document.getElementById("joy");
+const knob=document.getElementById("knob");
+let joyId=null;
+joy.addEventListener("pointerdown",e=>{
+ joyId=e.pointerId;joy.setPointerCapture(e.pointerId);move(e);
+});
+joy.addEventListener("pointermove",e=>{
+ if(e.pointerId===joyId)move(e);
+});
+function move(e){
+ let r=joy.getBoundingClientRect();
+ let x=e.clientX-(r.left+r.width/2);
+ let y=e.clientY-(r.top+r.height/2);
+ let d=Math.hypot(x,y),max=32;
+ if(d>max){x=x/d*max;y=y/d*max}
+ dx=x/max;dy=y/max;
+ knob.style.left=(31+x)+"px";
+ knob.style.top=(31+y)+"px";
+}
+function stop(){
+ joyId=null;dx=0;dy=0;
+ knob.style.left="31px";knob.style.top="31px";
+}
+joy.addEventListener("pointerup",stop);
+joy.addEventListener("pointercancel",stop);
+
+// Kick button
+const kickButton=document.getElementById("kick");
+kickButton.addEventListener("pointerdown",e=>{
+ e.preventDefault();kick=true;
+});
+window.addEventListener("keydown",e=>{
+ if(e.key===" "||e.key==="Enter")kick=true;
+ if(e.key==="ArrowLeft")dx=-1;
+ if(e.key==="ArrowRight")dx=1;
+ if(e.key==="ArrowUp")dy=-1;
+ if(e.key==="ArrowDown")dy=1;
+});
+window.addEventListener("keyup",e=>{
+ if(e.key==="ArrowLeft"||e.key==="ArrowRight")dx=0;
+ if(e.key==="ArrowUp"||e.key==="ArrowDown")dy=0;
+});
+</script>
+</body>
+  </html>
+    
