@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMER ZONE</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:white;font-family:Arial,sans-serif}
+header{background:#111b2e;padding:22px;text-align:center}
+header h1{color:#00eaff;margin:0}
+nav{text-align:center;padding:15px;background:#17243b}
+nav a{color:white;text-decoration:none;margin:10px}
+.hero{text-align:center;padding:65px 15px;background:linear-gradient(135deg,#102d50,#080d18)}
+.hero h2{font-size:38px;color:#00eaff}
+button{background:#00d9ff;border:0;padding:13px 25px;border-radius:8px;font-weight:bold}
+.container{padding:25px;max-width:900px;margin:auto}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:#17243b;padding:25px;border-radius:14px;text-align:center}
+.card h3{color:#00eaff}
+footer{text-align:center;padding:25px;background:#111b2e;margin-top:30px}
+</style>
+</head>
+<body>
+<header><h1>🎮 GAMER ZONE</h1>
+<p>Your Ultimate Gaming World</p></header>
+<nav>
+<a href="#">Home</a>
+<a href="#games">Games</a>
+<a href="#about">About</a>
+</nav>
+<section class="hero">
+<h2>WELCOME GAMER!</h2>
+<p>Play More. Win More. Be a Legend.</p>
+<button onclick="document.getElementById('games').scrollIntoView()">Explore Games</button>
+</section>
+<div class="container" id="games">
+<h2>🔥 Popular Games</h2>
+<div class="games">
+<div class="card"><h3>🔥 Free Fire</h3><p>Battle Royale Gaming</p></div>
+<div class="card"><h3>⚔️ PUBG Mobile</h3><p>Survival Battle Game</p></div>
+<div class="card"><h3>🎯 Minecraft</h3><p>Build Your World</p></div>
+</div>
+</div>
+<div class="container" id="about">
+<h2>About Us</h2>
+<p>Welcome to Gamer Zone. Your gaming adventure starts here!</p>
+</div>
+<footer>© 2026 GAMER ZONE | All Rights Reserved</footer>
+</body>
+  </html>
+  
